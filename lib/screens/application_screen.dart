@@ -52,6 +52,12 @@ class _ApplicationScreenState extends ConsumerState<ApplicationScreen> {
     final domain = knownDomain(company);
     final people = checkedCompanies()[company] ?? const [];
     final gist = summarize(job);
+    // The summary, else what you'd do, else the post's first real line (not a "Responsibilities:" heading).
+    final about = gist.tldr.isNotEmpty
+        ? gist.tldr
+        : gist.doing.isNotEmpty
+            ? "You'd ${gist.doing.take(2).map((d) => d.isEmpty ? d : d[0].toLowerCase() + d.substring(1)).join('; ')}."
+            : job.description.split('\n').map((l) => l.trim()).firstWhere((l) => l.length > 30 && !l.endsWith(':'), orElse: () => '');
     final n = ref.read(appsProvider.notifier);
     final email = a.to.contains('@');
 
@@ -114,7 +120,7 @@ class _ApplicationScreenState extends ConsumerState<ApplicationScreen> {
           section('About $company', [
             Brutal(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if (gist.tldr.isNotEmpty) Text(gist.tldr) else if (job.description.isNotEmpty) Text(job.description.split('\n').first),
+                if (about.isNotEmpty) Text(about),
                 const SizedBox(height: 8),
                 Wrap(spacing: 6, runSpacing: 6, children: [
                   if (job.location.isNotEmpty) Pill('📍 ${job.location}'),

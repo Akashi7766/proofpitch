@@ -317,6 +317,7 @@ List<String> domainCandidates(String company) {
   if (named != null) return [named.toLowerCase()];
   final all = _words(company.replaceAll(RegExp(r"[.,'’]"), ''));
   final core = coreWords(company);
+  if (core.isEmpty) return const []; // "Pvt Ltd", emoji-only names: nothing to guess from
   final bases = <String>{
     core.join(),
     all.join(),
@@ -333,6 +334,7 @@ int siteScore(String company, String html) {
   final og = (RegExp(r'''og:(?:site_name|title)["']\s+content=["']([^"']+)''', caseSensitive: false).firstMatch(html)?.group(1) ?? '').toLowerCase();
   final where = '$title $og'.replaceAll(RegExp(r'[^a-z0-9]'), '');
   final core = coreWords(company);
+  if (core.isEmpty) return 0;
   if (core.every(where.contains)) return 2;
   return core.first.length >= 5 && where.contains(core.first) ? 1 : 0;
 }
@@ -494,7 +496,7 @@ const linkedInNoteLimit = 300;
 
 /// Connection notes on LinkedIn are capped at 300 characters, so this is a different pitch, not a trimmed one.
 String shortNote(StudentProfile s, JobListing j, List<Project> projects, Persona p) {
-  final first = s.name.split(' ').first;
+  final first = s.firstName;
   final top = projects.isEmpty ? null : orderForPersona(projects, p).first;
   final yr = s.graduationYear == null ? '' : " '${s.graduationYear! % 100}";
   final me = [if (s.degree.isNotEmpty) '${s.degree}$yr', if (s.college.isNotEmpty) s.college].join(', ');

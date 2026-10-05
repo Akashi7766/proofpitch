@@ -214,7 +214,12 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
 
   Future<void> _findEmail() async {
     setState(() => _finding = true);
-    final found = await findCompanyEmails(widget.job);
+    EmailSearch found;
+    try {
+      found = await findCompanyEmails(widget.job);
+    } catch (_) {
+      found = const EmailSearch(null, []); // no network, odd company name…: fall back to LinkedIn/search
+    }
     if (!mounted) return;
     setState(() {
       _finding = false;
@@ -223,7 +228,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
       _rebuildRoutes();
       final best = found.contacts.firstOrNull;
       if (best != null) {
-        _route = _routes.firstWhere((r) => r.target == best.email);
+        _route = _routes.firstWhere((r) => r.target == best.email, orElse: () => _route);
         _to.text = _route.target;
         _regenerate();
       }
@@ -311,7 +316,10 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
       return;
     }
     try {
-      await scheduleFollowUp(widget.job.id.hashCode & 0x7fffffff, widget.job.company);
+      final reminded = await scheduleFollowUp(widget.job.id.hashCode & 0x7fffffff, widget.job.company);
+      if (!reminded) {
+        messenger.showSnackBar(const SnackBar(content: Text('Notifications are off, so no reminder will pop up. TRACK still shows when to follow up.')));
+      }
     } catch (_) {
       // Reminders are a nice-to-have; never block the send on them.
     }

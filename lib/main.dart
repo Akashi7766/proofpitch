@@ -39,6 +39,12 @@ class ProofPitchApp extends StatelessWidget {
         title: 'ProofPitch',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
+        // Android draws edge-to-edge: without this, sheets and pages sit under the 3-button nav bar.
+        // One wrapper above the Navigator keeps every route and bottom sheet above it.
+        builder: (context, child) => ColoredBox(
+          color: C.white,
+          child: SafeArea(top: false, left: false, right: false, child: child!),
+        ),
         home: const Shell(),
       );
 }

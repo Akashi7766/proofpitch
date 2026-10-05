@@ -28,9 +28,9 @@ List<ColdTarget> ycTargets(List<Map> companies) => [
       for (final c in companies)
         if (c['status'] == 'Active' && ((c['team_size'] as num?) ?? 0) <= 100)
           if (_inIndia(c) || ('${c['regions']}'.contains('Fully Remote') && c['isHiring'] == true))
-            if ((c['website'] as String? ?? '').isNotEmpty)
+            if ('${c['website'] ?? ''}'.isNotEmpty && '${c['name'] ?? ''}'.isNotEmpty)
               ColdTarget(
-                (c['name'] as String).replaceAll(RegExp(r',? Inc\.?$'), ''),
+                '${c['name']}'.replaceAll(RegExp(r',? Inc\.?$'), ''),
                 const [],
                 {_inIndia(c) ? '🟠 Y Combinator · ${c['batch']}' : '🟠 Y Combinator · Remote'},
                 // One-liner, tags and industries only: long descriptions mention everything.
@@ -223,7 +223,7 @@ class ColdBrief {
 }
 
 Pitch buildColdPitch(StudentProfile s, ColdBrief b, List<Project> projects, {bool resumeAttached = false}) {
-  final first = s.name.split(' ').first;
+  final first = s.firstName;
   final person = b.contact?.name.split(' ').first ?? '';
   final greet = person.isNotEmpty && b.contact!.role != ContactRole.general ? 'Hi $person,' : 'Hi ${b.company} team,';
   final field = b.field == null ? '' : ', ideally on ${b.field!.label.toLowerCase()}';

@@ -65,13 +65,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final n = ref.read(profileProvider.notifier);
     StudentProfile cur() => ref.read(profileProvider);
 
-    Widget field(String label, String value, void Function(String) onChanged, {TextInputType? type}) => Padding(
+    Widget field(String label, String value, void Function(String) onChanged, {TextInputType? type, String? hint}) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextFormField(
             key: ValueKey('$label-$_gen'),
             initialValue: value,
             keyboardType: type,
-            decoration: InputDecoration(labelText: label, isDense: true),
+            decoration: InputDecoration(labelText: label, isDense: true, helperText: hint, helperMaxLines: 2),
             onChanged: onChanged,
           ),
         );
@@ -81,7 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
         children: [
           Row(children: [
-            Expanded(child: Text(p.name.isEmpty ? 'Who are you?' : 'Hey, ${p.name.split(' ').first}.', style: display(32))),
+            Expanded(child: Text(p.name.isEmpty ? 'Who are you?' : 'Hey, ${p.firstName}.', style: display(32))),
             const Sticker('proof > pdf', color: C.lime, angle: 6),
           ]),
           const SizedBox(height: 4),
@@ -112,6 +112,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SectionTitle('Basics'),
           field('Name', p.name, (v) => n.save(cur().copyWith(name: v))),
+          field('Call me', p.callMe, (v) => n.save(cur().copyWith(callMe: v.trim())),
+              hint: "What emails say: “I'm ${p.firstName.isEmpty ? '…' : p.firstName}”. Leave empty to use your first name."),
           field('College', p.college, (v) => n.save(cur().copyWith(college: v))),
           Row(children: [
             Expanded(

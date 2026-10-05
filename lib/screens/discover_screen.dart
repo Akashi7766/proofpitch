@@ -98,6 +98,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     final ranked = rankFeed(jobs, profile, filter.copyWith(eligibleOnly: false), query: _q, emailCompanies: _emailCompanies);
     final ineligible = ranked.where((e) => !e.ok).length;
     final shown = filter.eligibleOnly ? ranked.where((e) => e.ok).toList() : ranked;
+    // Most internships are business/marketing; a narrow field can leave 0–5. Say so, and say how many exist elsewhere.
+    final fieldLimited = filter.fields.isNotEmpty || (filter.myInterests && profile.interests.isNotEmpty);
+    final elsewhere = fieldLimited && shown.length < 10
+        ? rankFeed(jobs, profile, filter.copyWith(myInterests: false, fields: {}), query: _q, emailCompanies: _emailCompanies)
+                .where((e) => e.ok || !filter.eligibleOnly)
+                .length -
+            shown.length
+        : 0;
 
     final demand = <String, int>{};
     for (final j in jobs) {
@@ -249,13 +257,27 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             if (feed.isLoading && !feed.hasValue)
-              const SliverFillRemaining(child: EmptyState('🛰️', 'Scanning boards…', 'Pulling fresh listings straight from the source.'))
+              // hasScrollBody: false lets it grow past the space left under a tall header instead of overflowing;
+              // the bottom padding keeps the text clear of the LEAD button.
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 90),
+                  child: EmptyState('🛰️', 'Scanning boards…', 'Pulling fresh listings from Unstop, company careers pages and Telegram. '
+                      'The first load takes up to half a minute.'),
+                ),
+              )
             else if (feed.hasError && manual.isEmpty)
-              SliverFillRemaining(child: EmptyState('🔌', 'No signal', 'Check your connection and pull to refresh.'))
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(padding: EdgeInsets.only(bottom: 90), child: EmptyState('🔌', 'No signal', 'Check your connection and pull to refresh.')),
+              )
             else if (shown.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: EmptyState(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 90), // clear of the LEAD button
+                  child: EmptyState(
                     '🦗',
                     'Crickets.',
                     _f.fields.isNotEmpty
@@ -263,10 +285,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                             'Follow studios on Greenhouse/Lever (top-right), or Share → ProofPitch from a LinkedIn post.'
                         : 'Nothing matches these filters. Loosen them up or follow more companies.',
                     action: Column(mainAxisSize: MainAxisSize.min, children: [
+                      if (elsewhere > 0) ...[_fieldsHint(elsewhere), const SizedBox(height: 12)],
                       BrutalButton('Find more leads', icon: Icons.travel_explore_rounded, onTap: () => showLeadsSheet(context, ref)),
                       const SizedBox(height: 12),
-                      BrutalButton('Reset filters', color: C.white, onTap: () => setState(() => _f = const FeedFilter())),
-                    ])),
+                      BrutalButton('Reset filters', color: C.white, onTap: () => setState(() => _f = const FeedFilter(myInterests: false))),
+                    ]),
+                  ),
+                ),
               )
             else
               SliverPadding(
@@ -277,7 +302,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     if (i == 0) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          if (elsewhere > 0) ...[_fieldsHint(elsewhere), const SizedBox(height: 12)],
+                          Text(
                           [
                             'Sorted: ${filter.sort.label}',
                             if (filter.eligibleOnly && ineligible > 0) "$ineligible you don't qualify for hidden",
@@ -285,7 +312,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                             'swipe → save, ← hide',
                           ].join(' · '),
                           style: const TextStyle(color: muted, fontSize: 13),
-                        ),
+                          ),
+                        ]),
                       );
                     }
                     final (job: j, :score, near: _, :ok, :ease) = shown[i - 1];
@@ -315,6 +343,27 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       ),
     );
   }
+
+  Widget _fieldsHint(int elsewhere) => Brutal(
+        color: C.yellow,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Few internships in your fields right now', style: display(15)),
+          const SizedBox(height: 4),
+          const Text('Most posted internships are in business and marketing. Small companies in your field are often '
+              "hiring without posting: that's what Cold pitch is for."),
+          const SizedBox(height: 10),
+          Wrap(spacing: 16, runSpacing: 8, children: [
+            GestureDetector(
+              onTap: () => setState(() => _f = _f.copyWith(myInterests: false, fields: {})),
+              child: Text('See $elsewhere in other fields', style: const TextStyle(fontWeight: FontWeight.w800, decoration: TextDecoration.underline)),
+            ),
+            GestureDetector(
+              onTap: () => ref.read(coldModeProvider.notifier).set(true),
+              child: const Text('❄️ Cold pitch companies in my field', style: TextStyle(fontWeight: FontWeight.w800, decoration: TextDecoration.underline)),
+            ),
+          ]),
+        ]),
+      );
 
   Widget _chip(String label, bool on, VoidCallback onTap, {Color color = C.lime}) => Padding(
         padding: const EdgeInsets.only(right: 8),

@@ -28,7 +28,7 @@ FollowUpKit followUpKit(Application a, StudentProfile s, {DateTime? now}) {
   final n = now ?? DateTime.now();
   final job = a.job;
   final company = cleanCompany(job.company);
-  final first = s.name.split(' ').first;
+  final first = s.firstName;
   final cold = job.source == 'Cold pitch';
   final role = cold ? 'internship' : job.title;
   final days = n.difference(a.updatedAt).inDays;

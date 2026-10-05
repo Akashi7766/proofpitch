@@ -86,10 +86,28 @@ void main() {
     expect(rep.checks.firstWhere((c) => c.label.startsWith('Tech skills')).ok, isTrue);
   });
 
-  test('hard gates: missing most required skills blocks applying', () {
-    final rep = runPreflight(me, _job(location: 'Pune', skills: ['react', 'node.js', 'mongodb', 'flutter']), me.projects);
+  test('hard gates: none of the required skills blocks; some of them only warns', () {
+    final rep = runPreflight(me, _job(location: 'Pune', skills: ['react', 'node.js', 'mongodb', 'golang']), me.projects);
     expect(rep.cleared, isFalse);
-    expect(rep.blockers.single.label, 'Tech skills 1/4');
+    expect(rep.blockers.single.label, 'Tech skills 0/4');
+    final some = runPreflight(me, _job(location: 'Pune', skills: ['react', 'node.js', 'mongodb', 'flutter']), me.projects);
+    expect(some.cleared, isTrue);
+    expect(some.checks.firstWhere((c) => c.label == 'Tech skills 1/4').ok, isFalse, reason: 'still flagged as a warning');
+  });
+
+  test('applicant groups: "All" lets everyone in; final-year students count as freshers', () {
+    final year = DateTime.now().year;
+    JobListing g(List<String> groups) => JobListing(id: 'us-1', company: 'X', title: 'Intern', applyTarget: 'x', eligibleGroups: groups);
+    const bsc = StudentProfile(degree: 'B.Sc');
+    expect(isEligible(bsc, g(['All'])), isTrue);
+    expect(isEligible(StudentProfile(degree: 'B.Sc', graduationYear: year + 1), g(['Fresher'])), isTrue);
+    expect(isEligible(StudentProfile(degree: 'B.Sc', graduationYear: year + 2), g(['Fresher'])), isFalse);
+    expect(isEligible(bsc, g(['Engineering Students'])), isFalse);
+  });
+
+  test('knowing Flutter means knowing Dart; React means JavaScript', () {
+    const s = StudentProfile(skills: ['flutter', 'react']);
+    expect(s.allSkills, containsAll(['dart', 'javascript']));
   });
 
   test('hard gates: location and work authorization', () {

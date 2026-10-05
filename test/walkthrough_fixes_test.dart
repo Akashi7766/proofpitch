@@ -1,6 +1,8 @@
 // Regression tests for issues found by walking through the app as a student.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:proof_pitch/cold.dart';
 import 'package:proof_pitch/engines.dart';
+import 'package:proof_pitch/followup.dart';
 import 'package:proof_pitch/insights.dart';
 import 'package:proof_pitch/models.dart';
 
@@ -87,5 +89,20 @@ TECHNICAL SKILLS
     expect(r.skills, isNot(contains('vs code')));
     expect(r.skills, isNot(contains('agile workflows')));
     expect(r.skills, contains('git'));
+  });
+
+  test('"Call me" name is used in greetings; the full name stays in signatures', () {
+    const me = StudentProfile(name: 'Mohammad Kashif Mukaddam', callMe: 'Kashif', college: 'Mithibai', skills: ['flutter'], projects: [_notes]);
+    expect(me.firstName, 'Kashif');
+    expect(const StudentProfile(name: 'Mohammad Kashif Mukaddam').firstName, 'Mohammad');
+    final job = JobListing(id: 'x', company: 'Tiny Labs', title: 'Flutter Intern', applyTarget: 'hr@tinylabs.in');
+    final pitch = buildPitch(me, job, me.projects, Channel.directEmail, Persona.founder);
+    expect(pitch.body, contains("I'm Kashif"));
+    expect(pitch.body, isNot(contains("I'm Mohammad")));
+    expect(pitch.body, contains('Mohammad Kashif Mukaddam'), reason: 'signature keeps the full name');
+    expect(buildColdPitch(me, const ColdBrief(company: 'Tiny Labs'), me.projects).body, contains("I'm Kashif"));
+    final kit = followUpKit(Application(job: job, status: AppStatus.sent, updatedAt: DateTime(2026, 10, 1)), me, now: DateTime(2026, 10, 2));
+    expect(kit.replies.first.body, endsWith('Kashif'));
+    expect(StudentProfile.fromJson(me.toJson()).callMe, 'Kashif');
   });
 }

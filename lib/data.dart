@@ -159,7 +159,7 @@ JobListing unstopJob(Map j) {
       for (final f in (j['filters'] as List? ?? const []))
         if (f is Map && f['type'] == 'eligible') f['name'] as String,
     ],
-    applicants: j['registerCount'] as int?,
+    applicants: (j['registerCount'] as num?)?.toInt(),
   );
 }
 
@@ -264,7 +264,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
     'ashby' => 'https://api.ashbyhq.com/posting-api/job-board/$slug',
     _ => throw ArgumentError('Unknown board provider: $provider'),
   };
-  final res = await c.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+  // Big Lever boards (Paytm: 2.7 MB, ~20 s) need the room, especially on mobile data.
+  final res = await c.get(Uri.parse(url)).timeout(const Duration(seconds: 60));
   if (res.statusCode != 200) throw Exception('$board → HTTP ${res.statusCode}');
   final data = jsonDecode(utf8.decode(res.bodyBytes));
   final co = _titleCase(slug);
@@ -275,8 +276,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
           _job(
             'gh-${j['id']}',
             j['company_name'] ?? co,
-            j['title'],
-            j['absolute_url'],
+            j['title'] ?? '',
+            j['absolute_url'] ?? '',
             (j['location'] as Map?)?['name'] ?? '',
             htmlToText(j['content'] ?? ''),
             posted: _date(j['first_published'] ?? j['updated_at']),
@@ -289,8 +290,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
           _job(
             'lv-${j['id']}',
             co,
-            j['text'],
-            j['hostedUrl'],
+            j['text'] ?? '',
+            j['hostedUrl'] ?? '',
             (j['categories'] as Map?)?['location'] ?? '',
             [
               j['descriptionPlain'] ?? '',
@@ -308,8 +309,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
             _job(
               'ab-${j['id']}',
               co,
-              j['title'],
-              j['jobUrl'],
+              j['title'] ?? '',
+              j['jobUrl'] ?? '',
               j['location'] ?? '',
               j['descriptionPlain'] ?? '',
               posted: _date(j['publishedAt']),

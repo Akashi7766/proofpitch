@@ -280,7 +280,8 @@ Set<String> studentGroups(StudentProfile s) {
   if (RegExp(r'btech|^be$|mtech|engineer').hasMatch(d)) g.add('engineering');
   if (RegExp(r'bsc|bca|bcom|^ba$|msc|science|arts|commerce|mca').hasMatch(d)) g.add('sciences');
   if (RegExp(r'bba|mba|bms|management').hasMatch(d)) g.add('management');
-  if (s.graduationYear != null && s.graduationYear! < DateTime.now().year) g.add('fresher');
+  // Final-year students count as freshers in Indian hiring (Unstop's "Fresher" is ticked on 350+ internships).
+  if (s.graduationYear != null && s.graduationYear! <= DateTime.now().year + 1) g.add('fresher');
   return g;
 }
 
@@ -325,7 +326,7 @@ List<Check> eligibility(StudentProfile s, JobListing job) {
     if (mine.isEmpty) {
       checks.add(Check(label, false, detail: 'Add your degree to check this.'));
     } else {
-      final ok = mine.any(theirs.contains);
+      final ok = theirs.contains('all') || mine.any(theirs.contains);
       checks.add(Check(label, ok, hard: !ok, detail: ok ? 'Your ${s.degree} qualifies.' : "Your ${s.degree} isn't on the list."));
     }
   }
@@ -359,13 +360,17 @@ List<Check> eligibility(StudentProfile s, JobListing job) {
   if (tech.length >= 2) {
     final mine = s.allSkills;
     final hit = tech.where(mine.contains).length;
-    final ok = hit * 3 >= tech.length; // need at least a third of the technical skills they ask for
+    // Posts list everything they'd like; a Flutter dev missing git and REST APIs can still apply to a Flutter
+    // internship. Only none of their skills blocks; under a third is a warning.
+    final ok = hit * 3 >= tech.length;
     final missing = tech.where((k) => !mine.contains(k)).join(', ');
     checks.add(Check('Tech skills $hit/${tech.length}', ok,
-        hard: !ok,
-        detail: ok
-            ? (hit == tech.length ? 'You have every technical skill they list.' : 'Missing: $missing')
-            : 'You show only $hit of ${tech.length} technical skills they need. Missing: $missing'));
+        hard: hit == 0,
+        detail: hit == tech.length
+            ? 'You have every technical skill they list.'
+            : hit == 0
+                ? "You show none of the technical skills they need: $missing"
+                : 'Missing: $missing'));
   }
   return checks;
 }
@@ -580,7 +585,7 @@ Map<String, String> templateVars(StudentProfile s, JobListing job, List<Project>
     'company': cleanCompany(job.company),
     'role': job.title,
     'name': s.name,
-    'first_name': s.name.split(' ').first,
+    'first_name': s.firstName,
     'college': s.college,
     'degree': s.degree,
     'year': s.graduationYear?.toString() ?? '',

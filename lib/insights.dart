@@ -36,7 +36,11 @@ String pdfToText(Uint8List bytes) {
 /// clearly apart (more than a fifth of the font size); inside a word the gap is ~0.
 String _spacedLine(TextLine l) {
   if (l.wordCollection.isEmpty) return l.text;
-  final minGap = l.fontSize * 0.2;
+  // Word/Google Docs exports can come back as one "word" per letter; joining those would give
+  // "M O H A M M A D". The line's own text already has the right spaces there.
+  final words = l.wordCollection.where((w) => w.text.trim().isNotEmpty).toList();
+  if (words.length > 3 && words.where((w) => w.text.length == 1).length * 2 > words.length) return l.text;
+  final minGap = (l.fontSize > 0 ? l.fontSize : l.bounds.height) * 0.2; // some PDFs report size 0
   return l.wordCollection.map((w) {
     final g = w.glyphs;
     if (g.length < 2 || g.map((x) => x.text).join() != w.text) return w.text; // ligatures etc.: trust the word
@@ -248,7 +252,14 @@ ResumeData parseResume(String raw) {
     (l) => RegExp(r'university|institute|college|\biit\b|\bnit\b|\bbits\b|school of|vidyalaya|academy', caseSensitive: false).hasMatch(l),
     orElse: () => '',
   );
-  final college = collegeLine.split(RegExp(r'\s[|–—]\s|\s\|\s?|,\s*(?=\d)|\s\d{4}')).first.replaceAll(RegExp(r'[,\s|]+$'), '').trim();
+  var college = collegeLine.split(RegExp(r'\s[|–—]\s|\s\|\s?|,\s*(?=\d)|\s\d{4}')).first.replaceAll(RegExp(r'[,\s|]+$'), '').trim();
+  // "Bachelor of Science in Computer Science (SYBSc CS) Mithibai College": the degree came first; keep the institution.
+  if (RegExp(r'\b(bachelor|master|diploma|b\.?\s?(sc|tech|e|com|ca|ba)|m\.?\s?(sc|tech|ca|ba))\b', caseSensitive: false).hasMatch(college)) {
+    final inst = RegExp(r"(?:[A-Z][\w.'’&-]*\s+){0,4}(?:College|University|Institute|Academy|Vidyalaya)\b(?:\s+of(?:\s+[A-Z][\w&]*){1,4})?")
+        .allMatches(college)
+        .lastOrNull;
+    if (inst != null) college = inst[0]!.trim();
+  }
 
   final degree = switch (eduLower) {
     _ when RegExp(r'b\.?\s?tech|bachelor of technology|b\.?e\.?\b|bachelor of engineering').hasMatch(eduLower) => 'B.Tech',
@@ -301,6 +312,9 @@ ResumeData parseResume(String raw) {
   if (country.isEmpty && phone.startsWith('+91')) country = 'India';
 
   final projects = _projects(sections['projects'] ?? const [], github.isEmpty ? '' : _https(github), warnings);
+  if (year == null && degree.isNotEmpty) {
+    warnings.add('No graduation year found. Add it below: batch rules and "Fresher" internships depend on it.');
+  }
 
   return ResumeData(
     name: name,
