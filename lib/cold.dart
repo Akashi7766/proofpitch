@@ -223,7 +223,7 @@ class ColdBrief {
 }
 
 Pitch buildColdPitch(StudentProfile s, ColdBrief b, List<Project> projects, {bool resumeAttached = false}) {
-  final first = s.name.split(' ').first;
+  final first = s.firstName;
   final person = b.contact?.name.split(' ').first ?? '';
   final greet = person.isNotEmpty && b.contact!.role != ContactRole.general ? 'Hi $person,' : 'Hi ${b.company} team,';
   final field = b.field == null ? '' : ', ideally on ${b.field!.label.toLowerCase()}';

@@ -257,13 +257,27 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             if (feed.isLoading && !feed.hasValue)
-              const SliverFillRemaining(child: EmptyState('🛰️', 'Scanning boards…', 'Pulling fresh listings straight from the source.'))
+              // hasScrollBody: false lets it grow past the space left under a tall header instead of overflowing;
+              // the bottom padding keeps the text clear of the LEAD button.
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 90),
+                  child: EmptyState('🛰️', 'Scanning boards…', 'Pulling fresh listings from Unstop, company careers pages and Telegram. '
+                      'The first load takes up to half a minute.'),
+                ),
+              )
             else if (feed.hasError && manual.isEmpty)
-              SliverFillRemaining(child: EmptyState('🔌', 'No signal', 'Check your connection and pull to refresh.'))
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(padding: EdgeInsets.only(bottom: 90), child: EmptyState('🔌', 'No signal', 'Check your connection and pull to refresh.')),
+              )
             else if (shown.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: EmptyState(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 90), // clear of the LEAD button
+                  child: EmptyState(
                     '🦗',
                     'Crickets.',
                     _f.fields.isNotEmpty
@@ -275,7 +289,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       BrutalButton('Find more leads', icon: Icons.travel_explore_rounded, onTap: () => showLeadsSheet(context, ref)),
                       const SizedBox(height: 12),
                       BrutalButton('Reset filters', color: C.white, onTap: () => setState(() => _f = const FeedFilter(myInterests: false))),
-                    ])),
+                    ]),
+                  ),
+                ),
               )
             else
               SliverPadding(

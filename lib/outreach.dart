@@ -496,7 +496,7 @@ const linkedInNoteLimit = 300;
 
 /// Connection notes on LinkedIn are capped at 300 characters, so this is a different pitch, not a trimmed one.
 String shortNote(StudentProfile s, JobListing j, List<Project> projects, Persona p) {
-  final first = s.name.split(' ').first;
+  final first = s.firstName;
   final top = projects.isEmpty ? null : orderForPersona(projects, p).first;
   final yr = s.graduationYear == null ? '' : " '${s.graduationYear! % 100}";
   final me = [if (s.degree.isNotEmpty) '${s.degree}$yr', if (s.college.isNotEmpty) s.college].join(', ');

@@ -96,6 +96,7 @@ class ResumeSection {
 class StudentProfile {
   const StudentProfile({
     this.name = '',
+    this.callMe = '',
     this.college = '',
     this.cgpa,
     this.graduationYear,
@@ -119,6 +120,7 @@ class StudentProfile {
   });
 
   final String name;
+  final String callMe; // what people call you ("Kashif" for "Mohammad Kashif Mukaddam"); '' = first word of the name
   final String college;
   final double? cgpa;
   final int? graduationYear;
@@ -144,6 +146,9 @@ class StudentProfile {
 
   bool get isEmpty => name.isEmpty && projects.isEmpty && skills.isEmpty;
 
+  /// The name emails, replies and greetings use.
+  String get firstName => callMe.trim().isNotEmpty ? callMe.trim() : name.trim().split(' ').first;
+
   /// Everything you can claim: listed skills, every project tag, and what those clearly imply.
   Set<String> get allSkills {
     final all = {...skills, for (final p in projects) ...p.tags};
@@ -156,6 +161,7 @@ class StudentProfile {
 
   StudentProfile copyWith({
     String? name,
+    String? callMe,
     String? college,
     double? cgpa,
     int? graduationYear,
@@ -179,6 +185,7 @@ class StudentProfile {
   }) =>
       StudentProfile(
         name: name ?? this.name,
+        callMe: callMe ?? this.callMe,
         college: college ?? this.college,
         cgpa: cgpa ?? this.cgpa,
         graduationYear: graduationYear ?? this.graduationYear,
@@ -203,6 +210,7 @@ class StudentProfile {
 
   Map<String, dynamic> toJson() => {
         'name': name,
+        'callMe': callMe,
         'college': college,
         'cgpa': cgpa,
         'graduationYear': graduationYear,
@@ -227,6 +235,7 @@ class StudentProfile {
 
   factory StudentProfile.fromJson(Map j) => StudentProfile(
         name: j['name'] ?? '',
+        callMe: j['callMe'] ?? '',
         college: j['college'] ?? '',
         cgpa: (j['cgpa'] as num?)?.toDouble(),
         graduationYear: j['graduationYear'],

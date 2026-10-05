@@ -585,7 +585,7 @@ Map<String, String> templateVars(StudentProfile s, JobListing job, List<Project>
     'company': cleanCompany(job.company),
     'role': job.title,
     'name': s.name,
-    'first_name': s.name.split(' ').first,
+    'first_name': s.firstName,
     'college': s.college,
     'degree': s.degree,
     'year': s.graduationYear?.toString() ?? '',

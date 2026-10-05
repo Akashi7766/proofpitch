@@ -264,7 +264,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
     'ashby' => 'https://api.ashbyhq.com/posting-api/job-board/$slug',
     _ => throw ArgumentError('Unknown board provider: $provider'),
   };
-  final res = await c.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+  // Big Lever boards (Paytm: 2.7 MB, ~20 s) need the room, especially on mobile data.
+  final res = await c.get(Uri.parse(url)).timeout(const Duration(seconds: 60));
   if (res.statusCode != 200) throw Exception('$board → HTTP ${res.statusCode}');
   final data = jsonDecode(utf8.decode(res.bodyBytes));
   final co = _titleCase(slug);
