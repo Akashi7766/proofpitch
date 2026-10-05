@@ -46,6 +46,14 @@ void main() {
     expect(r.projects[1].kind, ProjectKind.playStore);
   });
 
+  test('college after the degree on the same line; missing grad year is flagged', () {
+    final r = parseResume('Asha Rao\nasha@x.com\nEducation\nBachelor of Science in Computer Science (SYBSc CS) Mithibai College\nCumulative CGPA: 8.51');
+    expect(r.college, 'Mithibai College');
+    expect(r.degree, 'B.Sc');
+    expect(r.warnings, contains(contains('No graduation year')));
+    expect(parseResume('Education\nB.Tech, Indian Institute of Technology Bombay 2027').college, 'Indian Institute of Technology Bombay');
+  });
+
   test('mergeInto keeps existing data and dedupes projects', () {
     const existing = StudentProfile(
       portfolio: 'https://mine.me',

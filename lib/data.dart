@@ -159,7 +159,7 @@ JobListing unstopJob(Map j) {
       for (final f in (j['filters'] as List? ?? const []))
         if (f is Map && f['type'] == 'eligible') f['name'] as String,
     ],
-    applicants: j['registerCount'] as int?,
+    applicants: (j['registerCount'] as num?)?.toInt(),
   );
 }
 
@@ -275,8 +275,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
           _job(
             'gh-${j['id']}',
             j['company_name'] ?? co,
-            j['title'],
-            j['absolute_url'],
+            j['title'] ?? '',
+            j['absolute_url'] ?? '',
             (j['location'] as Map?)?['name'] ?? '',
             htmlToText(j['content'] ?? ''),
             posted: _date(j['first_published'] ?? j['updated_at']),
@@ -289,8 +289,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
           _job(
             'lv-${j['id']}',
             co,
-            j['text'],
-            j['hostedUrl'],
+            j['text'] ?? '',
+            j['hostedUrl'] ?? '',
             (j['categories'] as Map?)?['location'] ?? '',
             [
               j['descriptionPlain'] ?? '',
@@ -308,8 +308,8 @@ Future<List<JobListing>> fetchBoard(String board, {http.Client? client}) async {
             _job(
               'ab-${j['id']}',
               co,
-              j['title'],
-              j['jobUrl'],
+              j['title'] ?? '',
+              j['jobUrl'] ?? '',
               j['location'] ?? '',
               j['descriptionPlain'] ?? '',
               posted: _date(j['publishedAt']),

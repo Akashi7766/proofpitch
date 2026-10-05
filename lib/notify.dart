@@ -6,8 +6,9 @@ final notifications = FlutterLocalNotificationsPlugin();
 /// Debug builds nudge after 10 seconds so the reminder is testable.
 const followUpDelay = bool.fromEnvironment('dart.vm.product') ? Duration(days: 5) : Duration(seconds: 10);
 
-Future<void> scheduleFollowUp(int id, String company) async {
-  await notifications
+/// Returns false when the student said no to notifications (the reminder won't show).
+Future<bool> scheduleFollowUp(int id, String company) async {
+  final allowed = await notifications
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.requestNotificationsPermission();
   await notifications
@@ -24,4 +25,5 @@ Future<void> scheduleFollowUp(int id, String company) async {
     ),
     androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
   );
+  return allowed ?? true;
 }

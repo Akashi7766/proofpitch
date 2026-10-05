@@ -148,7 +148,9 @@ class StudentProfile {
   Set<String> get allSkills {
     final all = {...skills, for (final p in projects) ...p.tags};
     if (all.any(const {'unity', 'unreal engine', 'godot'}.contains)) all.add('game development');
-    if (all.contains('flutter')) all.add('dart');
+    for (final k in [...all]) {
+      all.addAll(_implies[k] ?? const []);
+    }
     return all;
   }
 
@@ -426,3 +428,19 @@ class Application {
         body: j['body'] ?? '',
       );
 }
+
+/// Knowing one means you can honestly say you know the other.
+const _implies = {
+  'flutter': ['dart'],
+  'react': ['javascript'],
+  'next.js': ['react', 'javascript'],
+  'vue': ['javascript'],
+  'angular': ['typescript', 'javascript'],
+  'typescript': ['javascript'],
+  'node.js': ['javascript'],
+  'django': ['python'],
+  'flask': ['python'],
+  'fastapi': ['python'],
+  'spring': ['java'],
+  'pandas': ['python'],
+};
